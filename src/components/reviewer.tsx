@@ -5,6 +5,7 @@ import type { Critique, Finding, Severity } from "@/lib/types";
 import { rubricList } from "@/lib/rubrics";
 import type { RubricId } from "@/lib/types";
 import { track } from "@/lib/analytics";
+import { apiPath } from "@/lib/base";
 
 const sevChip: Record<Severity, string> = {
   critical: "bg-accent text-accent-fg",
@@ -39,7 +40,7 @@ export function Reviewer() {
     setCritique(null);
     track("demo_started", { rubric, sample: useSample });
     try {
-      const res = await fetch("/api/analyze", {
+      const res = await fetch(apiPath("/api/analyze"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ rubric, mode: "mock" }),
@@ -260,7 +261,7 @@ function Results({
 function FindingCard({ f }: { f: Finding }) {
   const [rated, setRated] = useState(false);
   async function rate(n: number) {
-    await fetch("/api/feedback", {
+    await fetch(apiPath("/api/feedback"), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ rating: n, findingId: f.id }),
