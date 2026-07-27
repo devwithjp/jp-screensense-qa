@@ -4,6 +4,11 @@ export type Severity = "critical" | "high" | "medium" | "low";
 export type Category = "accessibility" | "ux" | "copy" | "hierarchy" | "trust" | "conversion";
 export type RubricId = "accessibility" | "conversion" | "trust" | "ux";
 
+// Where a finding lives on the screenshot, as percentages of image width/height.
+// Only the curated sample critique carries regions (hand-annotated against
+// public/sample-checkout.svg); live-mode findings omit it.
+export type Region = { x: number; y: number; w: number; h: number };
+
 export type Finding = {
   id: string;
   title: string;
@@ -11,6 +16,7 @@ export type Finding = {
   category: Category;
   description: string;
   suggestion: string;
+  region?: Region;
 };
 
 export type Critique = {

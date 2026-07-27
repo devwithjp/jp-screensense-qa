@@ -5,7 +5,11 @@ import type { Critique, Finding, Severity } from "@/lib/types";
 import { rubricList } from "@/lib/rubrics";
 import type { RubricId } from "@/lib/types";
 import { track } from "@/lib/analytics";
-import { apiPath } from "@/lib/base";
+import { apiPath, BASE_PATH } from "@/lib/base";
+
+// Bundled sample: a deliberately flawed SaaS checkout the mock critique is
+// hand-annotated against (regions in src/lib/mock.ts map to this image).
+const SAMPLE_SRC = `${BASE_PATH}/sample-checkout.svg`;
 
 const sevChip: Record<Severity, string> = {
   critical: "bg-accent text-accent-fg",
@@ -26,19 +30,33 @@ export function Reviewer() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Severity | "all">("all");
   const fileRef = useRef<HTMLInputElement>(null);
+  const isSample = preview === SAMPLE_SRC;
 
   function onFile(file: File) {
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
+    reader.onload = () => {
+      setPreview(reader.result as string);
+      setCritique(null);
+      setError(null);
+    };
     reader.readAsDataURL(file);
   }
 
-  async function analyze(useSample: boolean) {
+  // Loads the sample into the preview only — analysis stays behind the single
+  // "Analyze" CTA so the button states always read clearly.
+  function loadSample() {
+    setPreview(SAMPLE_SRC);
+    setCritique(null);
+    setError(null);
+  }
+
+  async function analyze() {
+    if (!preview || loading) return;
     setLoading(true);
     setError(null);
     setCritique(null);
-    track("demo_started", { rubric, sample: useSample });
+    track("demo_started", { rubric, sample: isSample });
     try {
       const res = await fetch(apiPath("/api/analyze"), {
         method: "POST",
@@ -47,7 +65,6 @@ export function Reviewer() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Analysis failed");
-      if (useSample && !preview) setPreview("sample");
       setCritique(data.critique);
       setFilter("all");
       track("ai_output_generated", { rubric, findings: data.critique.findings.length });
@@ -65,7 +82,7 @@ export function Reviewer() {
     const md =
       `# UI Review — ${rubric}\n\n${critique.summary}\n\nConfidence: ${critique.confidence}\n\n## Findings\n` +
       critique.findings
-        .map((f) => `### [${f.severity.toUpperCase()}] ${f.title} (${f.category})\n${f.description}\n\n**Fix:** ${f.suggestion}\n`)
+        .map((f, i) => `### ${i + 1}. [${f.severity.toUpperCase()}] ${f.title} (${f.category})\n${f.description}\n\n**Fix:** ${f.suggestion}\n`)
         .join("\n") +
       `\n## Recommendations\n${critique.recommendations.map((r) => `- ${r}`).join("\n")}\n\n## Risks\n${critique.risks
         .map((r) => `- ${r}`)
@@ -80,6 +97,8 @@ export function Reviewer() {
     track("export_clicked", { rubric });
   }
 
+  const showMarkers = isSample && critique !== null && !loading;
+
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
       {/* Left: input */}
@@ -91,19 +110,39 @@ export function Reviewer() {
             if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]);
           }}
           onClick={() => fileRef.current?.click()}
-          className="flex aspect-[16/10] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-surface text-center transition-colors hover:border-accent/50"
+          className="relative flex aspect-[16/10] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-surface text-center transition-colors hover:border-accent/50"
         >
-          {preview && preview !== "sample" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Uploaded screenshot" className="h-full w-full object-contain" />
-          ) : preview === "sample" ? (
-            <div className="bg-grid flex h-full w-full items-center justify-center">
-              <span className="font-mono text-xs text-muted">sample screenshot</span>
-            </div>
+          {preview ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview}
+                alt={isSample ? "Sample checkout screen (CloudMetric)" : "Uploaded screenshot"}
+                className="h-full w-full object-contain"
+              />
+              {showMarkers ? (
+                <div className="pointer-events-none absolute inset-0" aria-hidden>
+                  {critique.findings.map((f, i) =>
+                    f.region ? (
+                      <span
+                        key={f.id}
+                        style={{
+                          left: `${f.region.x + f.region.w / 2}%`,
+                          top: `${f.region.y + f.region.h / 2}%`,
+                        }}
+                        className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent font-mono text-[10px] font-semibold text-accent-fg shadow-[0_0_0_2px_var(--bg)]"
+                      >
+                        {i + 1}
+                      </span>
+                    ) : null
+                  )}
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="px-6">
               <div className="text-sm text-fg">Drop a screenshot or click to upload</div>
-              <div className="mt-1 text-xs text-muted">PNG / JPG — analysed locally in mock mode</div>
+              <div className="mt-1 text-xs text-muted">PNG / JPG / SVG — or load the bundled sample below</div>
             </div>
           )}
           <input
@@ -114,6 +153,12 @@ export function Reviewer() {
             onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
           />
         </div>
+        {isSample ? (
+          <p className="font-mono text-xs text-muted">
+            Sample: a deliberately flawed SaaS checkout. After analysis, numbered markers pin each finding to the
+            element it describes.
+          </p>
+        ) : null}
 
         <div>
           <div className="mb-2 text-sm font-medium text-muted">Rubric</div>
@@ -133,59 +178,86 @@ export function Reviewer() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => analyze(false)}
-            disabled={loading}
+            onClick={analyze}
+            disabled={loading || !preview}
             className="inline-flex h-11 items-center rounded-full bg-accent px-6 text-sm font-medium text-accent-fg disabled:opacity-50"
           >
             {loading ? "Analyzing…" : "Analyze"}
           </button>
           <button
-            onClick={() => analyze(true)}
-            disabled={loading}
+            onClick={loadSample}
+            disabled={loading || isSample}
             className="inline-flex h-11 items-center rounded-full border border-line px-5 text-sm hover:bg-elevated disabled:opacity-50"
           >
-            Use sample
+            {isSample ? "Sample loaded" : "Use sample"}
           </button>
         </div>
+        {!preview ? (
+          <p className="text-xs text-muted">Upload a screenshot or load the sample to enable Analyze.</p>
+        ) : null}
         {error ? <p className="text-sm text-muted">⚠ {error}</p> : null}
       </div>
 
       {/* Right: results */}
       <div>
-        {!critique ? (
+        {loading ? (
+          <ResultsSkeleton />
+        ) : !critique ? (
           <div className="flex h-full min-h-64 items-center justify-center rounded-xl border border-dashed border-line bg-surface p-8 text-center text-sm text-muted">
-            Pick a rubric and click <span className="mx-1 text-fg">Analyze</span> to get severity-ranked findings.
+            <p>
+              Load the sample or upload a screenshot, pick a rubric, then click{" "}
+              <span className="text-fg">Analyze</span> for severity-ranked findings.
+            </p>
           </div>
         ) : (
-          <Results critique={critique} filter={filter} setFilter={setFilter} onExport={exportMd} />
+          <Results critique={critique} isSample={isSample} filter={filter} setFilter={setFilter} onExport={exportMd} />
         )}
       </div>
     </div>
   );
 }
 
+function ResultsSkeleton() {
+  return (
+    <div className="space-y-4" aria-hidden>
+      <div className="h-9 animate-pulse rounded-lg border border-line bg-surface" />
+      <div className="h-28 animate-pulse rounded-xl border border-line bg-surface" />
+      <div className="h-8 w-2/3 animate-pulse rounded-full border border-line bg-surface" />
+      <div className="h-36 animate-pulse rounded-xl border border-line bg-surface" />
+      <div className="h-36 animate-pulse rounded-xl border border-line bg-surface" />
+    </div>
+  );
+}
+
 function Results({
   critique,
+  isSample,
   filter,
   setFilter,
   onExport,
 }: {
   critique: Critique;
+  isSample: boolean;
   filter: Severity | "all";
   setFilter: (s: Severity | "all") => void;
   onExport: () => void;
 }) {
   const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 };
   for (const f of critique.findings) counts[f.severity]++;
-  const shown = critique.findings.filter((f) => filter === "all" || f.severity === filter);
+  // Number findings by their severity-sorted position so card numbers always
+  // match the markers drawn on the sample preview, even when filtered.
+  const numbered = critique.findings.map((f, i) => ({ f, n: i + 1 }));
+  const shown = numbered.filter(({ f }) => filter === "all" || f.severity === filter);
 
   return (
     <div className="space-y-6">
       {critique.mode === "mock" ? (
         <div className="rounded-lg border border-line bg-surface px-4 py-2 font-mono text-xs text-muted">
-          sample analysis (mock mode) — add ANTHROPIC_API_KEY for a real vision critique of your screenshot
+          {isSample
+            ? "mock mode — a curated critique of the bundled sample checkout. Add ANTHROPIC_API_KEY for live vision critique of your own screenshots."
+            : "mock mode — your image stays local; these findings critique the bundled sample checkout, not your upload. Add ANTHROPIC_API_KEY for a live vision critique."}
         </div>
       ) : null}
 
@@ -216,8 +288,8 @@ function Results({
       </div>
 
       <div className="space-y-3">
-        {shown.map((f) => (
-          <FindingCard key={f.id} f={f} />
+        {shown.map(({ f, n }) => (
+          <FindingCard key={f.id} f={f} n={n} />
         ))}
       </div>
 
@@ -258,20 +330,23 @@ function Results({
   );
 }
 
-function FindingCard({ f }: { f: Finding }) {
+function FindingCard({ f, n }: { f: Finding; n: number }) {
   const [rated, setRated] = useState(false);
-  async function rate(n: number) {
+  async function rate(rating: number) {
     await fetch(apiPath("/api/feedback"), {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ rating: n, findingId: f.id }),
+      body: JSON.stringify({ rating, findingId: f.id }),
     });
     setRated(true);
-    track("feedback_submitted", { rating: n, findingId: f.id });
+    track("feedback_submitted", { rating, findingId: f.id });
   }
   return (
     <div className="rounded-xl border border-line bg-surface p-5">
       <div className="flex flex-wrap items-center gap-2">
+        <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full border border-line bg-elevated font-mono text-[10px] text-fg">
+          {n}
+        </span>
         <SeverityBadge s={f.severity} />
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted">{f.category}</span>
         <h3 className="font-medium">{f.title}</h3>

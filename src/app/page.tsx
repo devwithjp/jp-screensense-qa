@@ -11,10 +11,11 @@ export default function Home() {
         <Container className="py-14 sm:py-16">
           <div className="max-w-3xl">
             <Eyebrow>Multimodal · Product UX</Eyebrow>
-            <h1 className="mt-4 text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl">{app.tagline}</h1>
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl">{app.tagline}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">{app.description}</p>
             <p className="mt-4 font-mono text-xs text-muted">
-              Mock mode shows a curated sample analysis — no key. Add ANTHROPIC_API_KEY for real vision critique of your screenshot.
+              Mock mode critiques a bundled sample checkout — no key needed. Add ANTHROPIC_API_KEY for real vision
+              critique of your own screenshot.
             </p>
           </div>
         </Container>

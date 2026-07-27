@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" role="img" aria-label="Sample SaaS checkout screen with deliberate UX flaws, used for the mock analysis">
+  <!--
+    ScreenSense QA bundled sample: "CloudMetric" checkout, deliberately flawed.
+    Every mock finding in src/lib/mock.ts points at a real element below, via
+    region percentages of this 1200x750 canvas. If you move an element, update
+    the matching region in mock.ts.
+
+    Planted flaws:
+    - Placeholder-only labels (email, card, expiry, CVC, coupon), low-contrast #b9bec7
+    - Card field error signalled by red border alone (no message/icon)
+    - Tiny close "x" target top-right (~15px)
+    - Unlabeled icon-only "?" button beside CVC
+    - Two competing filled primary buttons: "Apply coupon" (pill) + "Complete purchase" (rounded rect)
+    - Pre-checked "product updates and partner offers" consent checkbox
+    - 9px ultra-low-contrast auto-renew fine print ($49 -> $59/mo) under the CTA
+    - Unsubstantiated "#1 analytics platform" badge
+    - Cramped order-summary rows; "Total due today $100.10" not visually distinct from other rows
+    - CTA price ($49/mo) contradicts total due today ($100.10)
+  -->
+  <defs>
+    <style>
+      text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .ink { fill: #111827; }
+      .body { fill: #4b5563; }
+      .placeholder { fill: #b9bec7; }
+      .input { fill: #ffffff; stroke: #d6d9de; }
+    </style>
+  </defs>
+
+  <!-- page background -->
+  <rect x="0" y="0" width="1200" height="750" fill="#eef0f3"/>
+
+  <!-- top bar -->
+  <rect x="0" y="0" width="1200" height="64" fill="#ffffff"/>
+  <line x1="0" y1="64" x2="1200" y2="64" stroke="#e5e7eb"/>
+  <rect x="28" y="18" width="28" height="28" rx="7" fill="#4f46e5"/>
+  <text x="42" y="37" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">C</text>
+  <text x="66" y="38" font-size="16" font-weight="600" class="ink">CloudMetric</text>
+  <text x="178" y="38" font-size="13" fill="#6b7280">/  Checkout — Pro plan</text>
+  <!-- FLAW: tiny close target -->
+  <text x="1168" y="40" text-anchor="middle" font-size="15" fill="#9ca3af">✕</text>
+
+  <!-- ===== left card: payment form ===== -->
+  <rect x="72" y="104" width="608" height="568" rx="12" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="104" y="152" font-size="20" font-weight="600" class="ink">Payment details</text>
+
+  <!-- FLAW: unsubstantiated superlative badge -->
+  <rect x="104" y="170" width="352" height="26" rx="13" fill="#eef2ff"/>
+  <text x="118" y="187" font-size="12" fill="#4f46e5">★  #1 analytics platform — loved by 50,000+ teams</text>
+
+  <!-- FLAW: email input, placeholder-only label -->
+  <rect x="104" y="224" width="544" height="44" rx="6" class="input"/>
+  <text x="120" y="251" font-size="14" class="placeholder">Email address</text>
+
+  <!-- FLAW: card input, error by red border alone, placeholder-only label -->
+  <rect x="104" y="284" width="544" height="44" rx="6" fill="#ffffff" stroke="#e5484d" stroke-width="1.5"/>
+  <text x="120" y="311" font-size="14" class="placeholder">Card number</text>
+  <rect x="556" y="298" width="24" height="16" rx="2" fill="#e8eaf0"/>
+  <rect x="586" y="298" width="24" height="16" rx="2" fill="#e8eaf0"/>
+  <rect x="616" y="298" width="24" height="16" rx="2" fill="#e8eaf0"/>
+
+  <!-- FLAW: cramped expiry/CVC row, 8px gutter -->
+  <rect x="104" y="344" width="264" height="44" rx="6" class="input"/>
+  <text x="120" y="371" font-size="14" class="placeholder">MM / YY</text>
+  <rect x="376" y="344" width="232" height="44" rx="6" class="input"/>
+  <text x="392" y="371" font-size="14" class="placeholder">CVC</text>
+  <!-- FLAW: unlabeled icon-only help button -->
+  <circle cx="626" cy="366" r="9" fill="#f1f2f5" stroke="#d6d9de"/>
+  <text x="626" y="370" text-anchor="middle" font-size="11" fill="#6b7280">?</text>
+
+  <!-- FLAW: coupon input + filled "Apply coupon" competing with the main CTA -->
+  <rect x="104" y="416" width="384" height="44" rx="6" class="input"/>
+  <text x="120" y="443" font-size="14" class="placeholder">Coupon code</text>
+  <rect x="496" y="416" width="152" height="44" rx="22" fill="#4f46e5"/>
+  <text x="572" y="443" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">Apply coupon</text>
+
+  <!-- FLAW: pre-checked partner-offers consent -->
+  <rect x="104" y="480" width="15" height="15" rx="3" fill="#4f46e5"/>
+  <path d="M107.5 487.5 l3.5 3.5 l6 -6.5" stroke="#ffffff" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <text x="128" y="493" font-size="13" class="body">Email me product updates and partner offers</text>
+
+  <!-- main CTA (price contradicts the order-summary total) -->
+  <rect x="104" y="522" width="544" height="48" rx="8" fill="#4f46e5"/>
+  <text x="376" y="551" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">Complete purchase — $49/mo</text>
+
+  <!-- FLAW: 9px ultra-low-contrast auto-renew fine print -->
+  <text x="104" y="592" font-size="9" fill="#c2c6cd">Renews automatically at $59/mo after the 3-month promo. Cancel anytime in settings.</text>
+
+  <!-- ===== right card: order summary ===== -->
+  <rect x="720" y="104" width="408" height="384" rx="12" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="752" y="148" font-size="16" font-weight="600" class="ink">Order summary</text>
+
+  <!-- FLAW: cramped rows, flat hierarchy on the total -->
+  <text x="752" y="182" font-size="13" class="body">Pro plan (billed monthly)</text>
+  <text x="1096" y="182" text-anchor="end" font-size="13" class="body">$49.00</text>
+  <text x="752" y="204" font-size="13" class="body">Additional seats × 3</text>
+  <text x="1096" y="204" text-anchor="end" font-size="13" class="body">$27.00</text>
+  <text x="752" y="226" font-size="13" class="body">Priority support add-on</text>
+  <text x="1096" y="226" text-anchor="end" font-size="13" class="body">$15.00</text>
+  <line x1="752" y1="242" x2="1096" y2="242" stroke="#e8eaf0"/>
+  <text x="752" y="262" font-size="13" class="body">Subtotal</text>
+  <text x="1096" y="262" text-anchor="end" font-size="13" class="body">$91.00</text>
+  <text x="752" y="284" font-size="13" class="body">Tax (GST 10%)</text>
+  <text x="1096" y="284" text-anchor="end" font-size="13" class="body">$9.10</text>
+  <text x="752" y="306" font-size="13" fill="#374151">Total due today</text>
+  <text x="1096" y="306" text-anchor="end" font-size="13" fill="#374151">$100.10</text>
+  <text x="752" y="338" font-size="12" fill="#8f9aab">Switch to annual billing and save 20%</text>
+
+  <text x="752" y="520" font-size="10" fill="#c6cad1">Powered by CloudPay · PCI DSS compliant</text>
+</svg>

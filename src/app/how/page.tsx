@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const steps = [
-  { n: "1", t: "Upload", d: "Drop a screenshot. In mock mode it stays in your browser; in live mode it's sent to the vision model." },
+  { n: "1", t: "Upload", d: "Drop a screenshot, or load the bundled sample — a deliberately flawed SaaS checkout. In mock mode images stay in your browser; in live mode they're sent to the vision model." },
   { n: "2", t: "Rubric", d: "Pick a lens — accessibility, conversion/PM, trust & safety, or general UX. The rubric focuses the critique." },
   { n: "3", t: "Critique", d: "claude-opus-4-8 vision analyses the image against the rubric and returns a strict JSON contract (summary, findings, recommendations, risks, confidence)." },
   { n: "4", t: "Severity ranking", d: "Findings are ordered critical → low so the worst issues surface first." },
@@ -50,8 +50,9 @@ export default function HowPage() {
         </p>
         <Eyebrow>What I deferred</Eyebrow>
         <p className="mt-3 leading-relaxed text-muted">
-          Pixel-accurate bounding boxes are out of the MVP — issue cards ranked by severity are the 80/20 of value and
-          avoid the hardest part of visual grounding.
+          Model-generated bounding boxes are out of the MVP — issue cards ranked by severity are the 80/20 of value and
+          avoid the hardest part of visual grounding. The bundled sample ships with hand-annotated region markers to
+          show what grounded findings look like; live-mode localisation stays deferred.
         </p>
       </div>
     </Section>
